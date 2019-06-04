@@ -1,0 +1,7 @@
+os: osx
+before_install:
+install:
+before_script:
+  # install fastlane
+  - sudo gem install fastlane -NV
+script:
