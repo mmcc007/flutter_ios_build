@@ -1,4 +1,4 @@
-app_identifier("com.example.flutterIosBuild") # The bundle identifier of your app
+app_identifier("com.orbsoft.counter") # The bundle identifier of your app
 apple_id("mmcc007@gmail.com") # Your Apple email address
 
 itc_team_id("118607454") # App Store Connect Team ID

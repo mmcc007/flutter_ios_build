@@ -3,7 +3,7 @@ before_install:
 install:
 before_script:
   # install fastlane
-  - sudo gem install fastlane -NV
+#  - sudo gem install fastlane -NV
 
   # install flutter
   - FLUTTER_CHANNEL=stable
@@ -13,4 +13,6 @@ before_script:
   - export PATH=$PWD/flutter/bin:$PWD/flutter/bin/cache/dart-sdk/bin:$PATH
   - flutter doctor -v
 
-script: flutter build ios -t test_driver/main.dart --debug
+script:
+  - cd ios
+  - fastlane build_debug

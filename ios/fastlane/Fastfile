@@ -15,7 +15,63 @@
 
 default_platform(:ios)
 
+# suppress output
+def suppress_output
+  original_stdout, original_stderr = $stdout.clone, $stderr.clone
+  $stderr.reopen File.new('/dev/null', 'w')
+  $stdout.reopen File.new('/dev/null', 'w')
+  yield
+ensure
+  $stdout.reopen original_stdout
+  $stderr.reopen original_stderr
+end
+
 platform :ios do
+
+  desc "pre-build debug"
+  private_lane :pre_build_debug do
+    sh ("cd ../.. && flutter build ios --debug --no-codesign")
+  end
+
+
+  desc "enable match code signing"
+  private_lane :enable_match_code_signing do
+    puts 'Retrieving signing certificates and profiles...'
+    # Stop fastlane from echoing back PUBLISHING_MATCH_CERTIFICATE_REPO var.
+    #suppress_output {
+      # Retrieves all the necessary certs and provisioning profiles.
+      sync_code_signing(
+        git_url: ENV['PUBLISHING_MATCH_CERTIFICATE_REPO'],
+        type: 'appstore',
+        readonly: true
+      )
+    #}
+    puts 'Certificates and profiles installed'
+
+  app_identifier=CredentialsManager::AppfileConfig.try_fetch_value(:app_identifier)
+  puts "app_identifier: #{app_identifier}"
+  profile_name='sigh_' + app_identifier + '_appstore_profile-path'
+
+    update_project_provisioning(
+      xcodeproj: 'Runner.xcodeproj',
+      target_filter: 'Runner',
+      build_configuration: 'Release',
+      profile: ENV[profile_name],
+    )
+  end
+
+
+  desc "build debug .app"
+  lane :build_debug do
+    #pre_build_debug
+    enable_match_code_signing
+    #disable_automatic_code_signing
+    sh ("cd ../.. && flutter build ios --debug")
+    #build_app(workspace: "Runner.xcworkspace", scheme: "Runner")
+    #enable_automatic_code_signing
+  end
+
+
   desc "Push a new release build to the App Store"
   lane :release do
     build_app(workspace: "Runner.xcworkspace", scheme: "Runner")
