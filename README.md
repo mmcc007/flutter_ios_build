@@ -1,3 +1,5 @@
+[![Build Status](https://travis-ci.com/mmcc007/flutter_ios_build.svg?branch=master)](https://travis-ci.com/mmcc007/flutter_ios_build)
+
 # flutter_ios_build
 
 A new Flutter project.
