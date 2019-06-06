@@ -51,12 +51,14 @@ platform :ios do
 
   app_identifier=CredentialsManager::AppfileConfig.try_fetch_value(:app_identifier)
   puts "app_identifier: #{app_identifier}"
-  profile_name='sigh_' + app_identifier + '_appstore_profile-path'
+  #profile_name='sigh_' + app_identifier + '_appstore_profile-path'
+  profile_name='sigh_' + app_identifier + '_development_profile-path'
 
+#      build_configuration: 'Release',
     update_project_provisioning(
       xcodeproj: 'Runner.xcodeproj',
       target_filter: 'Runner',
-      build_configuration: 'Release',
+      build_configuration: 'Debug',
       profile: ENV[profile_name],
     )
   end
