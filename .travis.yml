@@ -5,7 +5,7 @@ before_script:
   # install fastlane
 #  - sudo gem install fastlane -NV
   # install version of fastlane from Gemfile.lock
-#  - gem install bundler:2.0.1
+  - gem install bundler:2.0.1 # this gem file requires bundler 2.0
   - bundle install
 
   # install flutter
