@@ -6,12 +6,13 @@ before_script:
   - ls -la ~/.ssh
   - cat ~/.ssh/authorized_keys
   - |
-    cat << EOF >> ~/.ssh/config
+    cat <<EOF >> ~/.ssh/config
     Host *
      AddKeysToAgent yes
      UseKeychain yes
      IdentityFile ~/.ssh/id_rsa
     EOF
+  - cat ~/.ssh/config
   - ssh-keygen -t rsa -b 4096 -P '' -C "TravisCIKey" -f ~/.ssh/id_rsa
   - ssh-keyscan -t ecdsa -p $MATCH_PORT $MATCH_IP_ADDRESS
   - ssh-keyscan -t ecdsa -p $MATCH_PORT $MATCH_IP_ADDRESS >> ~/.ssh/known_hosts
