@@ -3,8 +3,8 @@ before_install:
 install:
 before_script:
   # resolve "SSH: The authenticity of host <host> can't be established"
-  - ssh-keyscan -t rsa -H $MATCH_IP_ADDRESS >> ~/.ssh/known_hosts
-  -
+  - ssh-keyscan -t ecdsa -p $MATCH_PORT $MATCH_IP_ADDRESS >> ~/.ssh/known_hosts
+
   # install fastlane
 #  - sudo gem install fastlane -NV
   # install version of fastlane from Gemfile.lock
