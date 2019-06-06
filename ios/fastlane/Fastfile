@@ -39,14 +39,14 @@ platform :ios do
   private_lane :enable_match_code_signing do
     puts 'Retrieving signing certificates and profiles...'
     # Stop fastlane from echoing back PUBLISHING_MATCH_CERTIFICATE_REPO var.
-    #suppress_output {
+    suppress_output {
       # Retrieves all the necessary certs and provisioning profiles.
       sync_code_signing(
         git_url: ENV['PUBLISHING_MATCH_CERTIFICATE_REPO'],
         type: 'development',
         readonly: true
       )
-    #}
+    }
     puts 'Certificates and profiles installed'
 
   app_identifier=CredentialsManager::AppfileConfig.try_fetch_value(:app_identifier)

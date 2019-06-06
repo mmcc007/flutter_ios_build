@@ -2,34 +2,20 @@ os: osx
 before_install:
 install:
 before_script:
-  # resolve "SSH: The authenticity of host <host> can't be established"
-  - ls -la ~/.ssh
-  - cat ~/.ssh/authorized_keys
-  - echo $PWD
+  # setup ssh for fastlane match
+  # set default identity file
   - |
     cat << EOF >> ~/.ssh/config
     Host *
      AddKeysToAgent yes
      UseKeychain yes
      IdentityFile $PWD/dummy-ssh-keys/key
-
-  - cat ~/.ssh/config
-#  - ssh-keygen -t rsa -b 4096 -P '' -C "TravisCIKey" -f ~/.ssh/id_rsa
-  # add MATCH_IP_ADDRESS public key to known hosts
-  - ssh-keyscan -t ecdsa -p $MATCH_PORT $MATCH_IP_ADDRESS
-  - ssh-keyscan -t ecdsa -p $MATCH_PORT $MATCH_IP_ADDRESS >> ~/.ssh/known_hosts
-  - ls -la ~/.ssh
-  - cat /etc/ssh/ssh_config
-  - ls -la dummy-ssh-keys
+  # add MATCH_HOST public key to known hosts
+  - ssh-keyscan -t ecdsa -p $MATCH_PORT $MATCH_HOST >> ~/.ssh/known_hosts
   - chmod 600 dummy-ssh-keys/key
   - chmod 700 dummy-ssh-keys
-#  - ssh -i dummy-ssh-keys/key -vvv git@$MATCH_IP_ADDRESS -p $MATCH_PORT
-  - ssh git@$MATCH_IP_ADDRESS -p $MATCH_PORT
 
   # install fastlane
-#  - sudo gem install fastlane -NV
-  # install version of fastlane from Gemfile.lock
-#  - rvm gemset use global # install bundler to a global gemset (since gem file is in local dir)
   - gem install bundler:2.0.1 # this gem file requires bundler 2.0
   - (cd ios; bundle install)
 
