@@ -6,7 +6,7 @@ before_script:
 #  - sudo gem install fastlane -NV
   # install version of fastlane from Gemfile.lock
 #  - gem install bundler:2.0.1
-  - (cd example; bundle install)
+  - bundle install
 
   # install flutter
   - FLUTTER_CHANNEL=stable
