@@ -9,7 +9,7 @@ before_script:
   - ssh-keyscan -t ecdsa -p $MATCH_PORT $MATCH_IP_ADDRESS
   - ssh-keyscan -t ecdsa -p $MATCH_PORT $MATCH_IP_ADDRESS >> ~/.ssh/known_hosts
   - ls -la ~/.ssh
-  - ssh git@$MATCH_IP_ADDRESS -p $MATCH_PORT
+  - ssh -vT git@$MATCH_IP_ADDRESS -p $MATCH_PORT
 
   # install fastlane
 #  - sudo gem install fastlane -NV
