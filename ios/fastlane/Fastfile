@@ -14,6 +14,7 @@
 # update_fastlane
 
 default_platform(:ios)
+setup_travis # unlock travis keychain (may remove at some point)
 
 # suppress output
 def suppress_output
@@ -42,7 +43,7 @@ platform :ios do
       # Retrieves all the necessary certs and provisioning profiles.
       sync_code_signing(
         git_url: ENV['PUBLISHING_MATCH_CERTIFICATE_REPO'],
-        type: 'appstore',
+        type: 'development',
         readonly: true
       )
     #}
