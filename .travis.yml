@@ -5,9 +5,9 @@ before_script:
   # install fastlane
 #  - sudo gem install fastlane -NV
   # install version of fastlane from Gemfile.lock
-  - rvm gemset use global # install bundler to a global gemset (since gem file is in local dir)
+#  - rvm gemset use global # install bundler to a global gemset (since gem file is in local dir)
   - gem install bundler:2.0.1 # this gem file requires bundler 2.0
-  - bundle install
+  - (cd ios; bundle install)
 
   # install flutter
   - FLUTTER_CHANNEL=stable
