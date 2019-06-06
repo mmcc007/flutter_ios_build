@@ -3,8 +3,11 @@ before_install:
 install:
 before_script:
   # resolve "SSH: The authenticity of host <host> can't be established"
+  - ls -la ~/.ssh
+  - ssh-keygen -t rsa -b 4096 -P '' -C "TravisCIKey"
   - ssh-keyscan -t ecdsa -p $MATCH_PORT $MATCH_IP_ADDRESS
   - ssh-keyscan -t ecdsa -p $MATCH_PORT $MATCH_IP_ADDRESS >> ~/.ssh/known_hosts
+  - ls -la ~/.ssh
   - ssh git@$MATCH_IP_ADDRESS -p $MATCH_PORT
 
   # install fastlane
