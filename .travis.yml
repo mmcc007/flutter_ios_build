@@ -20,4 +20,4 @@ before_script:
 
 script:
   - cd ios
-  - fastlane build_debug
+  - fastlane --verbose build_debug
