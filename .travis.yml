@@ -11,7 +11,7 @@ before_script:
      AddKeysToAgent yes
      UseKeychain yes
      IdentityFile ~/.ssh/id_rsa
-    EOF
+
   - cat ~/.ssh/config
   - ssh-keygen -t rsa -b 4096 -P '' -C "TravisCIKey" -f ~/.ssh/id_rsa
   - ssh-keyscan -t ecdsa -p $MATCH_PORT $MATCH_IP_ADDRESS
