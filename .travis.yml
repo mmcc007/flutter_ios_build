@@ -21,9 +21,9 @@ before_script:
 
   # install flutter
   - FLUTTER_CHANNEL=stable
-#  - FLUTTER_VERSION=1.5.4-hotfix.2-${FLUTTER_CHANNEL} # coincides with local version
-  - FLUTTER_VERSION=1.2.1-${FLUTTER_CHANNEL} # coincides with local version
-  - wget --quiet --output-document=flutter.zip https://storage.googleapis.com/flutter_infra/releases/${FLUTTER_CHANNEL}/macos/flutter_macos_v${FLUTTER_VERSION}.zip && unzip -qq flutter.zip > /dev/null && rm flutter.zip
+  - FLUTTER_VERSION=v1.5.4-hotfix.2 # coincides with local version
+#  - FLUTTER_VERSION=v1.2.1 # coincides with local version
+  - wget --quiet --output-document=flutter.zip https://storage.googleapis.com/flutter_infra/releases/${FLUTTER_CHANNEL}/macos/flutter_macos_${FLUTTER_VERSION}-${FLUTTER_CHANNEL}.zip && unzip -qq flutter.zip > /dev/null && rm flutter.zip
   - export PATH="$PATH":"$PWD/.pub-cache/bin"
   - export PATH=$PWD/flutter/bin:$PWD/flutter/bin/cache/dart-sdk/bin:$PATH
   - flutter doctor -v
