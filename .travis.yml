@@ -29,5 +29,15 @@ before_script:
   - flutter doctor -v
 
 script:
-  - cd ios
-  - fastlane build_debug
+  - (cd ios && fastlane build_debug)
+
+# deploy debug .app
+before_deploy:
+  - zip -r Runner.app.zip build/ios/Debug-iphoneos/Runner.app
+deploy:
+  provider: releases
+  api_key:
+    secure: DMnHqH12P1jS7LGV9Aar61gfBPwlZF+86Cs2x0e3Ghz5pk3Psx1ykv9lzIm1kQ3ZWVyZmrthXC+wG8UlsKNXEKrXqqfc4fxahji80FUpJPqIpEB24miNF5+z7GLL35fq0YHVRG9HxEXov5Db5vdiGzAzpe9hcHOzxaZcYRGXGool4DMfh82zOCJj/dAUOkJH2CrBglu1OVhDAHHH50tc6RpdwreZG8tFL9N2Y82usB0ewz+wjeHVeQKsxknIhm9Zz8rhXI9SK/TT8pBmg/IfMkzo8CCQLvOhob+AwZT+V2W7d3UEtaDA/C1XO7auIF9MnkX7CNOsGSFnLF2+AyM8d3dw4/nxhJ9s/CW2XDvgwP7AOw64FJXmHSKJAAnvK2PEvZpCh0lgLm5gGI0rNay90omfjaWuGBZPzQiwtWFCPd/ZoFtFaIypvnIAnSt9mCouP77wXyYplx8OAYSRNgFD4DIz8nax4eFQuZz4eg3AyDEuq/UK5iDL3jjYvrWjAT1El+6/0I5/rh3p36FmNDASZxSGKZ5a+Rtxou/UUcE3ftE3vAtOi0VaHQnaRpiKbxy3L0d7M3slBcMVxX0zff3fjvfU0AFhMUO33JdVs2qw4zLc5nOCzXe37+LKHU/AUlT02dNbkViFOg+GTENywMysmtqqdDatWnJG2Gi2ZElc0+c=
+  file: Runner.app.zip
+  on:
+    repo: mmcc007/flutter_ios_build
