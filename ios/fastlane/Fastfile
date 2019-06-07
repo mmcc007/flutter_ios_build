@@ -31,12 +31,6 @@ end
 
 platform :ios do
 
-  desc "pre-build debug"
-  private_lane :pre_build_debug do
-    sh ("cd ../.. && flutter build ios --debug --no-codesign")
-  end
-
-
   desc "enable match code signing"
   private_lane :enable_match_code_signing do
     puts 'Retrieving signing certificates and profiles...'
