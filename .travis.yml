@@ -19,6 +19,9 @@ before_script:
   - gem install bundler:2.0.1 # this gem file requires bundler 2.0
   - (cd ios; bundle install)
 
+  # install certificate and provisioning profile
+  - (cd ios && fastlane enable_match_code_signing)
+
   # install flutter
   - FLUTTER_CHANNEL=stable
   - FLUTTER_VERSION=v1.5.4-hotfix.2 # coincides with local version
@@ -28,8 +31,7 @@ before_script:
   - export PATH=$PWD/flutter/bin:$PWD/flutter/bin/cache/dart-sdk/bin:$PATH
   - flutter doctor -v
 
-script:
-  - (cd ios && fastlane build_debug)
+script: flutter build ios --debug
 
 # deploy debug .app
 before_deploy:

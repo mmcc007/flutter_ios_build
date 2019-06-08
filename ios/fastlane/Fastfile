@@ -32,7 +32,7 @@ end
 platform :ios do
 
   desc "enable match code signing"
-  private_lane :enable_match_code_signing do
+  lane :enable_match_code_signing do
     puts 'Retrieving signing certificates and profiles...'
     # Stop fastlane from echoing back PUBLISHING_MATCH_CERTIFICATE_REPO var.
 #        readonly: true
