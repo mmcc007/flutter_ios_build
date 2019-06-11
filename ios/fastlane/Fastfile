@@ -32,32 +32,49 @@ end
 platform :ios do
 
   desc "enable match code signing"
-  lane :enable_match_code_signing do
+  lane :enable_match_code_signing do |options|
+
+    # establish release or debug mode local vars
+    signing_type=''
+    build_configuration=''
+    #profile_name='' <-- this is an environment var
+    app_identifier=CredentialsManager::AppfileConfig.try_fetch_value(:app_identifier)
+    if options[:mode]=="debug"
+      signing_type='development'
+      build_configuration='Debug'
+      profile_name='sigh_' + app_identifier + '_development_profile-path'
+    else
+      signing_type='appstore'
+      build_configuration='Release'
+      profile_name='sigh_' + app_identifier + '_appstore_profile-path'
+    end
+    puts "signing_type: #{signing_type}"
+    puts "build_configuration: #{build_configuration}"
+    puts "profile_name: #{profile_name}"
+    puts "app_identifier: #{app_identifier}"
+
     puts 'Retrieving signing certificates and profiles...'
     # Stop fastlane from echoing back PUBLISHING_MATCH_CERTIFICATE_REPO var.
-    #suppress_output {
+    suppress_output {
       # Retrieves all the necessary certs and provisioning profiles.
         #force_for_new_devices: true,
         #readonly: false
       sync_code_signing(
         git_url: ENV['PUBLISHING_MATCH_CERTIFICATE_REPO'],
-        type: 'development',
+        type: signing_type,
         keychain_name: 'fastlane_tmp_keychain',
         readonly: true
       )
-    #}
+    }
     puts 'Certificates and profiles installed'
 
-  app_identifier=CredentialsManager::AppfileConfig.try_fetch_value(:app_identifier)
-  puts "app_identifier: #{app_identifier}"
-  #profile_name='sigh_' + app_identifier + '_appstore_profile-path'
-  profile_name='sigh_' + app_identifier + '_development_profile-path'
+    disable_automatic_code_signing
 
-#      build_configuration: 'Release',
+    # set provisioning profile
     update_project_provisioning(
       xcodeproj: 'Runner.xcodeproj',
       target_filter: 'Runner',
-      build_configuration: 'Debug',
+      build_configuration: build_configuration,
       profile: ENV[profile_name],
     )
   end
@@ -66,17 +83,16 @@ platform :ios do
   desc "build debug .app"
   lane :build_debug do
     #pre_build_debug
-    enable_match_code_signing
-    #disable_automatic_code_signing
+    enable_match_code_signing mode:'debug'
     sh ("cd ../.. && flutter build ios --debug")
     #build_app(workspace: "Runner.xcworkspace", scheme: "Runner")
-    #enable_automatic_code_signing
   end
 
 
   desc "Build release .ipa"
-  lane :release do
-    build_app(workspace: "Runner.xcworkspace", scheme: "Runner")
-    #upload_to_app_store(skip_metadata: true, skip_screenshots: true)
+  lane :build_release do
+    enable_match_code_signing mode:'release'
+    #build_app(workspace: "Runner.xcworkspace", scheme: "Runner")
+    build_app()
   end
 end
