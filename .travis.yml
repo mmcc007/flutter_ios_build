@@ -35,6 +35,7 @@ script:
 
 # deploy debug .app and release .ipa
 before_deploy:
+  - cd ..
   - zip -r Runner.app.zip build/ios/Debug-iphoneos/Runner.app
 deploy:
   provider: releases # publish to github
