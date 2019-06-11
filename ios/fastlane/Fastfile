@@ -35,17 +35,15 @@ platform :ios do
   lane :enable_match_code_signing do
     puts 'Retrieving signing certificates and profiles...'
     # Stop fastlane from echoing back PUBLISHING_MATCH_CERTIFICATE_REPO var.
-#        readonly: true
-#        force_for_new_devices: true
-
     #suppress_output {
       # Retrieves all the necessary certs and provisioning profiles.
+        #force_for_new_devices: true,
+        #readonly: false
       sync_code_signing(
         git_url: ENV['PUBLISHING_MATCH_CERTIFICATE_REPO'],
         type: 'development',
         keychain_name: 'fastlane_tmp_keychain',
-        force_for_new_devices: true,
-        readonly: false
+        readonly: true
       )
     #}
     puts 'Certificates and profiles installed'
@@ -76,7 +74,7 @@ platform :ios do
   end
 
 
-  desc "Push a new release build to the App Store"
+  desc "Build release .ipa"
   lane :release do
     build_app(workspace: "Runner.xcworkspace", scheme: "Runner")
     #upload_to_app_store(skip_metadata: true, skip_screenshots: true)
