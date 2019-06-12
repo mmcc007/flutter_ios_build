@@ -3,47 +3,111 @@
 set -e
 set -x
 
-test_dir='tmp'
+project_artifacts_base='https://github.com/mmcc007'
 app_name='flutter_ios_build'
-release='untagged-552378777d30e8c93f93'
+test_dir='tmp'
 base_dir=$PWD
-app_dir="$base_dir/$test_dir/$app_name-$release"
+debug_build_dir='build/ios/Debug-iphoneos'
+build_dir='build/ios/iphoneos'
+testable_app='Runner.app'
+
+main(){
+  # if no arguments passed
+  if [[ "$#" -eq 0 ]]; then show_help; fi
+
+  case $1 in
+      --download)
+          if [[ "$#" -ne 2 ]]; then show_help; fi
+          download_test_artifacts $2
+          ;;
+      --resign)
+          if [[ "$#" -ne 4 ]]; then show_help; fi
+          re-sign "${2}" "${4}"
+          ;;
+      --test)
+          run_test_flutter_no_build
+          ;;
+  esac
+}
+
+show_help() {
+    local script_name=$(basename "$0")
+    printf "\nusage: $script_name [--download <release tag>] [--resign <cert name> <provisioning path>] [--test]
+where:
+    --download
+        downloads the src (with test), signed testable .app and signed non-testable .ipa.
+        release tag can be found at $project_artifacts_base/$app_name/releases/latest
+    --resign
+        re-signs the testable .app using local developer account
+    --test
+        runs the integration test
+
+Sample usage:
+$script_name --resign 'iPhone Distribution: Maurice McCabe (ABCDEFGHIJ)' /Users/jenkins/Library/MobileDevice/Provisioning\ Profiles/408fa202-3212-469d-916c-c7f2ae4d083a.mobileprovision
+"
+    exit 1
+}
 
 # download project with signed testable .app and non-testable .ipa
 download_test_artifacts(){
-  local testable_app='Runner.app'
-  local non_testable_ipa='Runner.ipa'
-  local project_artifacts_base='https://github.com/mmcc007'
-  local app_src_url="$project_artifacts_base/$app_name/archive/$release.zip"
-  local testable_app_url="$project_artifacts_base/$app_name/releases/download/$release/$testable_app.zip"
-  local non_testable_ipa_url="$project_artifacts_base/$app_name/releases/download/$release/$non_testable_ipa"
-  local debug_build_dir='build/ios/Debug-iphoneos'
-  local build_dir='build/ios/iphoneos'
+  local release_tag=$1
 
-  # download and setup app src (with test)
+  local non_testable_ipa='Runner.ipa'
+  local app_src_url="$project_artifacts_base/$app_name/archive/$release_tag.zip"
+  local testable_app_url="$project_artifacts_base/$app_name/releases/download/$release_tag/$testable_app.zip"
+  local non_testable_ipa_url="$project_artifacts_base/$app_name/releases/download/$release_tag/$non_testable_ipa"
+
+  # clear test area
   rm -rf $test_dir
   mkdir $test_dir
+
+  # download and setup app src (with test)
   cd $test_dir
   wget $app_src_url
-  unzip "$release.zip"
+  unzip "$release_tag.zip"
 
   # download and setup testable .app
-  cd "$app_name-$release"
+  cd "$app_name-$release_tag"
   wget $testable_app_url
   unzip "$testable_app.zip"
-  mv $debug_build_dir $build_dir
+  mkdir $build_dir
+  # keep a copy of testable .app for repeated re-signing
+  cp -r "$debug_build_dir/$testable_app" $build_dir
 
   # download non-testable .ipa
   wget $non_testable_ipa_url
 }
 
+# re-sign signed testable .app with local developer account
+re-sign(){
+  local cert_name=$1
+  local provisioning_profile_path=$2
+  local resigned_app_dir='/tmp/resigned'
+
+  cd $(find_app_dir)
+
+  # resign testable .app
+  rm -rf $resigned_app_dir
+  mkdir $resigned_app_dir
+  ./script/resign.sh "$debug_build_dir/$testable_app" "$cert_name" --provisioning "$provisioning_profile_path" --verbose "$resigned_app_dir/$testable_app"
+
+  # over-write original testable .app with re-signed testable .app
+  rm -rf "$build_dir/$testable_app"
+  unzip $resigned_app_dir/$testable_app -d $resigned_app_dir
+  mv $resigned_app_dir/Payload/$testable_app $build_dir
+
+}
+
 # run test without flutter tools
-# note: assumes testable .app already built and installed on device
+# assumes testable .app already built
+# similar to --no-build
 run_test_custom() {
     local package_name='com.orbsoft.counter'
 #    local IOS_BUNDLE=$PWD/build/ios/Debug-iphoneos/Runner.app
     local IOS_BUNDLE='build/ios/iphoneos/Runner.app'
     local device_udid='3b3455019e329e007e67239d9b897148244b5053'
+
+    cd $(find_app_dir)
 
     # kill any running iproxy processes (that are holding local ports open)
     echo "killing any iproxy processes"
@@ -96,15 +160,23 @@ run_test_custom() {
 }
 
 run_test_flutter() {
-    flutter --verbose drive test_driver/main.dart
+  # builds a new testable .app using local cert and prov
+  # will install and start it and then run test
+  cd $(find_app_dir)
+  flutter --verbose drive test_driver/main.dart
 }
 
 run_test_flutter_no_build() {
-    flutter --verbose drive --no-build test_driver/main.dart
+  # expects to find a testable .app in build directory
+  # will install and start it and then run test
+  cd $(find_app_dir)
+  flutter --verbose drive --no-build test_driver/main.dart
 }
 
-download_test_artifacts
-cd $app_dir
-#run_test_custom
-#run_test_flutter
-run_test_flutter_no_build
+# find just created app dir
+find_app_dir(){
+  local app_dir="`find $test_dir -type d -maxdepth 1 -mindepth 1`"
+  echo $app_dir
+}
+
+main "$@"
