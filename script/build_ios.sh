@@ -41,7 +41,8 @@ build_ipa() {
 #    flutter build ios -t test_driver/main.dart --release
 
     flutter clean
-    flutter_dev build ios -t test_driver/main.dart --debug
+#    flutter_dev build ios -t test_driver/main.dart --debug
+    flutter build ios -t test_driver/main.dart --debug
 
     echo "Generating debug archive"
     xcodebuild archive \
