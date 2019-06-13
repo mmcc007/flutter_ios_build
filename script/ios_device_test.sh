@@ -15,7 +15,7 @@ published_testable_ipa='Debug_Runner.ipa'
 published_non_testable_ipa='Release_Runner.ipa'
 
 # area for unpacking
-unpack_dir='/tmp/unpack_testable_ipa'
+unpack_dir='/tmp/unpack_testable_app'
 
 main(){
   # if no arguments passed
@@ -41,7 +41,7 @@ main(){
           ;;
       --install_local_ipa)
           # for dev testing
-          install_testable_ipa_local .
+          install_testable_ipa_local . .
           ;;
       *)
           show_usage
@@ -89,7 +89,7 @@ download_project_artifacts(){
 
   cd $test_dir
 
-  # download app src (with test)
+  # download and setup project src (with test)
   wget $app_src_url
   unzip "$release_tag.zip"
 
@@ -116,17 +116,18 @@ install_testable_app(){
 
 # install or re-install from testable .ipa artifact to build directory
 install_testable_ipa(){
-  install_testable_ipa_local "$(find_app_dir)"
+  install_testable_ipa_local "$(find_app_dir)" $test_dir
 }
 
 # unpack testable .app from .ipa and install
 install_testable_ipa_local(){
   local dst_dir=$1
+  local artifact_dir=$2
 
   # clear unpack directory
   clear_unpacking_dir
 
-  unzip $published_testable_ipa -d $unpack_dir
+  unzip "$artifact_dir/$published_testable_ipa" -d $unpack_dir
 
   # install
   refresh_testable_app "$unpack_dir/Payload/$testable_app" $dst_dir
@@ -140,13 +141,13 @@ clear_unpacking_dir() {
 
 # clear build dir and install new testable .app
 refresh_testable_app() {
-  local new_testable_app_dir=$1
+  local src_testable_app_dir=$1
   local dst_app_dir=$2
   local dst_test_build_dir="$dst_app_dir/$test_build_dir"
 
   rm -rf $dst_test_build_dir
   mkdir -p $dst_test_build_dir
-  mv $new_testable_app_dir $dst_test_build_dir
+  mv $src_testable_app_dir $dst_test_build_dir
 }
 
 # re-sign testable .app or testable .ipa with local apple developer account
