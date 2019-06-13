@@ -76,7 +76,7 @@ download_project_artifacts(){
   local app_src_url="$project_artifacts_base/$app_name/archive/$release_tag.zip"
   local testable_app_url="$project_artifacts_base/$app_name/releases/download/$release_tag/Debug_$testable_app.zip"
   local testable_ipa_url="$project_artifacts_base/$app_name/releases/download/$release_tag/$testable_ipa"
-  local non_testable_ipa_url="$project_artifacts_base/$app_name/releases/download/$release_tag/$non_testable_ipa"
+  local non_testable_ipa_url="$project_artifacts_base/$app_name/releases/download/$release_tag/Release_$non_testable_ipa"
 
   # clear test area
   rm -rf $test_dir
@@ -87,13 +87,13 @@ download_project_artifacts(){
   wget $app_src_url
   unzip "$release_tag.zip"
 
-  # download and install testable .app in build directory
+  # download testable .app
   cd "$app_name-$release_tag"
-  wget -O "$testable_app.zip" $testable_app_url
-  unzip "$testable_app.zip"
-  mkdir $test_build_dir
-  # keep a copy of testable .app for repeated re-signing
-  cp -r "$debug_build_dir/$testable_app" $test_build_dir
+  wget $testable_app_url
+#  unzip "$testable_app.zip"
+#  mkdir $test_build_dir
+#  # keep a copy of testable .app for repeated re-signing
+#  cp -r "$debug_build_dir/$testable_app" $test_build_dir
 
   # download testable .ipa
   wget "$testable_ipa_url"
