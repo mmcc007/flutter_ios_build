@@ -255,7 +255,7 @@ run_test_flutter_no_build() {
   flutter --verbose drive --no-build test_driver/main.dart
 }
 
-# find just created app dir
+# find just created test app dir
 find_app_dir(){
   local app_dir="`find $test_dir -type d -maxdepth 1 -mindepth 1`"
   echo $app_dir
