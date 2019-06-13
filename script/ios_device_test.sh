@@ -8,7 +8,7 @@ app_name='flutter_ios_build'
 test_dir='tmp'
 base_dir=$PWD
 debug_build_dir='build/ios/Debug-iphoneos'
-build_dir='build/ios/iphoneos'
+test_build_dir='build/ios/iphoneos'
 testable_app='Runner.app'
 testable_ipa='Debug_Runner.ipa'
 
@@ -34,9 +34,9 @@ main(){
       --test)
           run_test_flutter_no_build
           ;;
-      --install)
+      --install_local_ipa)
           # for dev testing
-          install_testable_ipa 'build/ios/Debug-iphoneos/Runner.ipa'
+          install_testable_ipa
           ;;
       *)
           show_usage
@@ -91,9 +91,9 @@ download_project_artifacts(){
   cd "$app_name-$release_tag"
   wget -O "$testable_app.zip" $testable_app_url
   unzip "$testable_app.zip"
-  mkdir $build_dir
+  mkdir $test_build_dir
   # keep a copy of testable .app for repeated re-signing
-  cp -r "$debug_build_dir/$testable_app" $build_dir
+  cp -r "$debug_build_dir/$testable_app" $test_build_dir
 
   # download testable .ipa
   wget "$testable_ipa_url"
@@ -109,14 +109,14 @@ install_app(){
   unzip "$testable_app.zip"
 
   # copy to build dir for testing
-  rm -rf "$build_dir/$testable_app"
-  cp -r "$debug_build_dir/$testable_app" $build_dir
+  rm -rf "$test_build_dir/$testable_app"
+  cp -r "$debug_build_dir/$testable_app" $test_build_dir
 }
 
 # install or re-install from testable .ipa artifact to build directory
 install_ipa(){
   cd $(find_app_dir)
-  install_testable_ipa 'Runner.ipa'
+  install_testable_ipa
 }
 
 # re-sign testable .app or testable .ipa with local apple developer account
@@ -127,6 +127,8 @@ re-sign(){
   local resigned_app_dir='/tmp/resigned'
 
   cd $(find_app_dir)
+
+  # todo: re-sign from original artifacts
 
   # resign testable .app or testable .ipa
   local input_file=''
@@ -143,9 +145,9 @@ re-sign(){
   ./script/resign.sh "$input_file" "$cert_name" --provisioning "$provisioning_profile_path" --verbose "$output_file"
 
   # over-write original testable .app with re-signed testable .app
-  rm -rf "$build_dir/$testable_app"
+  rm -rf "$test_build_dir/$testable_app"
   unzip $output_file -d $resigned_app_dir
-  mv $resigned_app_dir/Payload/$testable_app $build_dir
+  mv $resigned_app_dir/Payload/$testable_app $test_build_dir
 }
 
 # run test without flutter tools
@@ -220,7 +222,7 @@ run_test_flutter_no_build() {
   # expects to find a testable .app in build directory
   # will install and start it and then run test
   cd $(find_app_dir)
-  flutter_dev --verbose drive --no-build test_driver/main.dart
+  flutter --verbose drive --no-build test_driver/main.dart
 }
 
 # find just created app dir
@@ -231,7 +233,7 @@ find_app_dir(){
 
 # unpack testable .app from .ipa and install
 install_testable_ipa(){
-  local testable_ipa_path=$1
+  local testable_ipa_path='Debug_Runner.ipa'
   local unpack_dir='/tmp/unpack_testable_ipa'
 
   # clear unpack directory
@@ -241,8 +243,11 @@ install_testable_ipa(){
   unzip $testable_ipa_path -d $unpack_dir
 
   # move to build area for testing
-  rm -rf "$build_dir/$testable_app"
-  mv $unpack_dir/Payload/$testable_app $build_dir
+  rm -rf "$test_build_dir/$testable_app"
+  # create test build dir in case of 'flutter clean'
+  mkdir -p $test_build_dir
+  # install testable .app
+  mv $unpack_dir/Payload/$testable_app $test_build_dir
 
 }
 
