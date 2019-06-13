@@ -85,7 +85,7 @@ platform :ios do
     #pre_build_debug
     enable_match_code_signing mode:'debug'
     #sh ("cd ../.. && flutter build ios --debug")
-    sh ("cd ../.. && flutter --verbose build ios --debug test_driver/main.dart")
+    sh ("cd ../.. && flutter build ios --debug test_driver/main.dart")
     #build_app(workspace: "Runner.xcworkspace", scheme: "Runner")
   end
 
