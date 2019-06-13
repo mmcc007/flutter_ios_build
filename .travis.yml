@@ -25,7 +25,7 @@ before_script:
 ##  - FLUTTER_VERSION=v1.2.1 # coincides with local version
 #  - wget --quiet --output-document=flutter.zip https://storage.googleapis.com/flutter_infra/releases/${FLUTTER_CHANNEL}/macos/flutter_macos_${FLUTTER_VERSION}-${FLUTTER_CHANNEL}.zip && unzip -qq flutter.zip > /dev/null && rm flutter.zip
 
-  # build modified dev flutter from fork
+  # build experimental flutter from fork
   - git clone https://github.com/mmcc007/flutter.git -b master
   - export PATH="$PATH":"$PWD/.pub-cache/bin"
   - export PATH=$PWD/flutter/bin:$PWD/flutter/bin/cache/dart-sdk/bin:$PATH
@@ -36,15 +36,14 @@ script:
   # build testable .app with dev cert/prov
   - (cd ios; fastlane build_debug)
   # build testable .ipa with dev cert/prov
-  - ./script/build_ios.sh --build
+#  - ./script/build_ios.sh --build
+  - (cd ios; fastlane build_debug_ipa)
   # build non-testable .ipa with distribution cert/prov
   - (cd ios; fastlane build_release)
 
 # deploy debug .app, debug .ipa and release .ipa
 before_deploy:
-  - zip -r Debug_Runner.app.zip build/ios/Debug-iphoneos/Runner.app
-  # rename debug .ipa
-  - mv build/ios/Debug-iphoneos/Runner.ipa build/ios/Debug-iphoneos/Debug_Runner.ipa
+  - (cd build/ios/Debug-iphoneos; zip -r ../../../Debug_Runner.app.zip Runner.app)
 deploy:
   provider: releases # publish to github
   skip_cleanup: true # avoid cleaning environment
@@ -52,8 +51,8 @@ deploy:
     secure: MpDrQL37qoS3SEVN4tu3+KQGIsNBdtyvse/0WnIE0KBUf4R7nIQ+EDi2GEm371ON/Xgzw4ZcVcb02WA6hH24s5AraS2Pv0Yh34vXzrgP+4c/KkI0d4P+/tztlIpTtOL8+DN43IKBU/bZUDffHb8YG4AsccmDPSrYAH821PZ3Hto9tuL0SFfe75rmAWWMVBKAyL6UqamDFxZqpqdPGy0ey/CQGY7ad6zSdHHUk8O2zwzXo6KsMptBI3jEbN3sFWQOG4F6baUjV5h4oieG2tThZRz3SKApTF2+aLCkiAf66LPIRo6QBMdawg1Zc1smdg8PyIA6DZBEDLS/RX5jdA9wI8/r+R3h6N+FyyUT49yT0xbBUImTx4tzH9DNIB29eYTNPu7FI51JvG2TGAkK4Ckrz2PPdZPMKXnWMQMLsk2BurhCnL6ODT2wZy9uas3/FIr+0ZiwCi9wdNQaqwnkbpCZ9PQN6lNWtcCa5dtD3MF8ZWZOI5aM1UUVMSye9mWXd+k3N89r2cbUr912oDndbO12OAlNg073GjYAu0TsEEQsIIlbDEGG1fYBhAla4hvdMn2DqIBnBIvZH+LgczgNlEkHTt3djv1S3G8W0UAEJwfbxboUHfeCK/H57AglU2hCTzjexGaCuds6oOkmhm8oP5oKJa9bTybZUa7UrLLHD4eE4IA=
   file:
   - Debug_Runner.app.zip
-  - ios/Runner.ipa
-  - build/ios/Debug-iphoneos/Debug_Runner.ipa
+  - Debug_Runner.ipa
+  - Release_Runner.ipa
   name: Debug and Release Flutter Artifacts $(date +'%d.%m.%Y %R')
   on:
     repo: mmcc007/flutter_ios_build

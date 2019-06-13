@@ -84,15 +84,36 @@ platform :ios do
   lane :build_debug do
     #pre_build_debug
     enable_match_code_signing mode:'debug'
-    sh ("cd ../.. && flutter build ios --debug")
+    #sh ("cd ../.. && flutter build ios --debug")
+    sh ("cd ../.. && flutter --verbose build ios --debug test_driver/main.dart")
     #build_app(workspace: "Runner.xcworkspace", scheme: "Runner")
   end
 
+  desc "Build debug .ipa"
+  lane :build_debug_ipa do
+    enable_match_code_signing mode:'debug'
+    #build_app(workspace: "Runner.xcworkspace", scheme: "Runner")
+    build_app(export_method: 'development', output_name: "Debug_Runner.ipa")
+    sh ("cd .. && mv Debug_Runner.ipa ..")
+    sh ("cd .. && mv Debug_Runner.app.dSYM.zip ..")
+  end
+
+  desc "Resign debug .ipa"
+  lane :resign_app do
+    resign(
+      ipa: "../../Debug_Runner.ipa", # can omit if using the `ipa` action
+      signing_identity: "iPhone Distribution: Maurice McCabe (ET2VMHJPVM)",
+      #provisioning_profile: "path/to/profile", # can omit if using the _sigh_ action
+    )
+  end
 
   desc "Build release .ipa"
   lane :build_release do
     enable_match_code_signing mode:'release'
     #build_app(workspace: "Runner.xcworkspace", scheme: "Runner")
-    build_app()
+    build_app(output_name: "Release_Runner.ipa")
+    sh ("cd .. && mv Release_Runner.ipa ..")
+    sh ("cd .. && mv Release_Runner.app.dSYM.zip ..")
   end
+
 end
