@@ -51,7 +51,7 @@ deploy:
   api_key:
     secure: MpDrQL37qoS3SEVN4tu3+KQGIsNBdtyvse/0WnIE0KBUf4R7nIQ+EDi2GEm371ON/Xgzw4ZcVcb02WA6hH24s5AraS2Pv0Yh34vXzrgP+4c/KkI0d4P+/tztlIpTtOL8+DN43IKBU/bZUDffHb8YG4AsccmDPSrYAH821PZ3Hto9tuL0SFfe75rmAWWMVBKAyL6UqamDFxZqpqdPGy0ey/CQGY7ad6zSdHHUk8O2zwzXo6KsMptBI3jEbN3sFWQOG4F6baUjV5h4oieG2tThZRz3SKApTF2+aLCkiAf66LPIRo6QBMdawg1Zc1smdg8PyIA6DZBEDLS/RX5jdA9wI8/r+R3h6N+FyyUT49yT0xbBUImTx4tzH9DNIB29eYTNPu7FI51JvG2TGAkK4Ckrz2PPdZPMKXnWMQMLsk2BurhCnL6ODT2wZy9uas3/FIr+0ZiwCi9wdNQaqwnkbpCZ9PQN6lNWtcCa5dtD3MF8ZWZOI5aM1UUVMSye9mWXd+k3N89r2cbUr912oDndbO12OAlNg073GjYAu0TsEEQsIIlbDEGG1fYBhAla4hvdMn2DqIBnBIvZH+LgczgNlEkHTt3djv1S3G8W0UAEJwfbxboUHfeCK/H57AglU2hCTzjexGaCuds6oOkmhm8oP5oKJa9bTybZUa7UrLLHD4eE4IA=
   file:
-  - Runner.app.zip
+  - Debug_Runner.app.zip
   - ios/Runner.ipa
   - build/ios/Debug-iphoneos/Debug_Runner.ipa
   name: Debug and Release Flutter Artifacts $(date +'%d.%m.%Y %R')
