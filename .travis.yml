@@ -36,8 +36,8 @@ script:
   # build testable .app with dev cert/prov
   - (cd ios; fastlane build_debug)
   # build testable .ipa with dev cert/prov
-#  - ./script/build_ios.sh --build
-  - (cd ios; fastlane build_debug_ipa)
+  - ./script/build_ios.sh --build
+#  - (cd ios; fastlane build_debug_ipa)
   # build non-testable .ipa with distribution cert/prov
   - (cd ios; fastlane build_release)
 
