@@ -16,27 +16,35 @@ before_script:
   - chmod 700 dummy-ssh-keys
 
   # install fastlane
-  - gem install bundler:2.0.1 # this gem file requires bundler 2.0
+  - gem install bundler:2.0.1 # the fastlane gem file requires bundler 2.0
   - (cd ios; bundle install)
 
   # install flutter
-  - FLUTTER_CHANNEL=stable
-  - FLUTTER_VERSION=v1.5.4-hotfix.2 # coincides with local version
-#  - FLUTTER_VERSION=v1.2.1 # coincides with local version
-  - wget --quiet --output-document=flutter.zip https://storage.googleapis.com/flutter_infra/releases/${FLUTTER_CHANNEL}/macos/flutter_macos_${FLUTTER_VERSION}-${FLUTTER_CHANNEL}.zip && unzip -qq flutter.zip > /dev/null && rm flutter.zip
+#  - FLUTTER_CHANNEL=stable
+#  - FLUTTER_VERSION=v1.5.4-hotfix.2 # coincides with local version
+##  - FLUTTER_VERSION=v1.2.1 # coincides with local version
+#  - wget --quiet --output-document=flutter.zip https://storage.googleapis.com/flutter_infra/releases/${FLUTTER_CHANNEL}/macos/flutter_macos_${FLUTTER_VERSION}-${FLUTTER_CHANNEL}.zip && unzip -qq flutter.zip > /dev/null && rm flutter.zip
+
+  # build modified dev flutter from fork
+  - git clone https://github.com/mmcc007/flutter.git -b master
   - export PATH="$PATH":"$PWD/.pub-cache/bin"
   - export PATH=$PWD/flutter/bin:$PWD/flutter/bin/cache/dart-sdk/bin:$PATH
+  - flutter precache
   - flutter doctor -v
 
 script:
   - cd ios
   - fastlane build_debug
   - fastlane build_release
-
-# deploy debug .app and release .ipa
-before_deploy:
   - cd ..
-  - zip -r Runner.app.zip build/ios/Debug-iphoneos/Runner.app
+  # build testable .ipa
+  - ./script/build_ios.sh --build
+
+# deploy debug .app, debug .ipa and release .ipa
+before_deploy:
+  - zip -r Debug_Runner.app.zip build/ios/Debug-iphoneos/Runner.app
+  # rename debug .ipa
+  - mv build/ios/Debug-iphoneos/Runner.ipa build/ios/Debug-iphoneos/Debug_Runner.ipa
 deploy:
   provider: releases # publish to github
   skip_cleanup: true # avoid cleaning environment
@@ -45,6 +53,7 @@ deploy:
   file:
   - Runner.app.zip
   - ios/Runner.ipa
+  - build/ios/Debug-iphoneos/Debug_Runner.ipa
   name: Debug and Release Flutter Artifacts $(date +'%d.%m.%Y %R')
   on:
     repo: mmcc007/flutter_ios_build

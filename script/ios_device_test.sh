@@ -10,6 +10,7 @@ base_dir=$PWD
 debug_build_dir='build/ios/Debug-iphoneos'
 build_dir='build/ios/iphoneos'
 testable_app='Runner.app'
+testable_ipa='Debug_Runner.ipa'
 
 main(){
   # if no arguments passed
@@ -27,16 +28,24 @@ main(){
       --test)
           run_test_flutter_no_build
           ;;
+      --unpack)
+          unpack_testable_app
+          ;;
+      *)
+          show_help
+          ;;
   esac
 }
 
 show_help() {
     local script_name=$(basename "$0")
-    printf "\nusage: $script_name [--download <release tag>] [--resign <cert name> <provisioning path>] [--test]
+    printf "\nusage: $script_name [--download <release tag>] [--unpack] [--resign <cert name> <provisioning path>] [--test]
 where:
     --download
         downloads the src (with test), signed testable .app and signed non-testable .ipa.
         release tag can be found at $project_artifacts_base/$app_name/releases/latest
+    --unpack
+        unpack and install the testable .ipa
     --resign
         re-signs the testable .app using local developer account
     --test
@@ -54,7 +63,8 @@ download_test_artifacts(){
 
   local non_testable_ipa='Runner.ipa'
   local app_src_url="$project_artifacts_base/$app_name/archive/$release_tag.zip"
-  local testable_app_url="$project_artifacts_base/$app_name/releases/download/$release_tag/$testable_app.zip"
+  local testable_app_url="$project_artifacts_base/$app_name/releases/download/$release_tag/Debug_$testable_app.zip"
+  local testable_ipa_url="$project_artifacts_base/$app_name/releases/download/$release_tag/$testable_ipa"
   local non_testable_ipa_url="$project_artifacts_base/$app_name/releases/download/$release_tag/$non_testable_ipa"
 
   # clear test area
@@ -73,6 +83,9 @@ download_test_artifacts(){
   mkdir $build_dir
   # keep a copy of testable .app for repeated re-signing
   cp -r "$debug_build_dir/$testable_app" $build_dir
+
+  # download testable .ipa
+  wget "$testable_ipa_url"
 
   # download non-testable .ipa
   wget $non_testable_ipa_url
@@ -170,13 +183,30 @@ run_test_flutter_no_build() {
   # expects to find a testable .app in build directory
   # will install and start it and then run test
   cd $(find_app_dir)
-  flutter --verbose drive --no-build test_driver/main.dart
+  flutter_dev --verbose drive --no-build test_driver/main.dart
 }
 
 # find just created app dir
 find_app_dir(){
   local app_dir="`find $test_dir -type d -maxdepth 1 -mindepth 1`"
   echo $app_dir
+}
+
+# unpack testable .app from .ipa and install
+unpack_testable_app(){
+  local testable_ipa_path='build/ios/Debug-iphoneos/Runner.ipa'
+  local unpack_dir='/tmp/unpack_testable_ipa'
+
+  # clear unpack directory
+  rm -rf $unpack_dir
+  mkdir $unpack_dir
+
+  unzip $testable_ipa_path -d $unpack_dir
+
+  # move to build area
+  rm -rf "$build_dir/$testable_app"
+  mv $unpack_dir/Payload/$testable_app $build_dir
+
 }
 
 main "$@"
