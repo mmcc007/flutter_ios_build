@@ -33,12 +33,12 @@ before_script:
   - flutter doctor -v
 
 script:
-  - cd ios
-  - fastlane build_debug
-  - fastlane build_release
-  - cd ..
-  # build testable .ipa
+  # build testable .app with dev cert/prov
+  - (cd ios; fastlane build_debug)
+  # build testable .ipa with dev cert/prov
   - ./script/build_ios.sh --build
+  # build non-testable .ipa with distribution cert/prov
+  - (cd ios; fastlane build_release)
 
 # deploy debug .app, debug .ipa and release .ipa
 before_deploy:
