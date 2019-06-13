@@ -10,7 +10,12 @@ base_dir=$PWD
 debug_build_dir='build/ios/Debug-iphoneos'
 test_build_dir='build/ios/iphoneos'
 testable_app='Runner.app'
-testable_ipa='Debug_Runner.ipa'
+published_testable_app='Debug_Runner.app.zip'
+published_testable_ipa='Debug_Runner.ipa'
+published_non_testable_ipa='Release_Runner.ipa'
+
+# area for unpacking
+unpack_dir='/tmp/unpack_testable_ipa'
 
 main(){
   # if no arguments passed
@@ -22,10 +27,10 @@ main(){
           download_project_artifacts $2
           ;;
       --install_app)
-          install_app
+          install_testable_app
           ;;
       --install_ipa)
-          install_ipa
+          install_testable_ipa
           ;;
       --resign)
           if [[ "$#" -ne 5 ]]; then show_usage; exit 1; fi
@@ -36,7 +41,7 @@ main(){
           ;;
       --install_local_ipa)
           # for dev testing
-          install_testable_ipa
+          install_testable_ipa_local .
           ;;
       *)
           show_usage
@@ -74,26 +79,22 @@ download_project_artifacts(){
 
   local non_testable_ipa='Runner.ipa'
   local app_src_url="$project_artifacts_base/$app_name/archive/$release_tag.zip"
-  local testable_app_url="$project_artifacts_base/$app_name/releases/download/$release_tag/Debug_$testable_app.zip"
-  local testable_ipa_url="$project_artifacts_base/$app_name/releases/download/$release_tag/$testable_ipa"
-  local non_testable_ipa_url="$project_artifacts_base/$app_name/releases/download/$release_tag/Release_$non_testable_ipa"
+  local testable_app_url="$project_artifacts_base/$app_name/releases/download/$release_tag/$published_testable_app"
+  local testable_ipa_url="$project_artifacts_base/$app_name/releases/download/$release_tag/$published_testable_ipa"
+  local non_testable_ipa_url="$project_artifacts_base/$app_name/releases/download/$release_tag/$published_non_testable_ipa"
 
   # clear test area
   rm -rf $test_dir
   mkdir $test_dir
 
-  # download and setup app src (with test)
   cd $test_dir
+
+  # download app src (with test)
   wget $app_src_url
   unzip "$release_tag.zip"
 
   # download testable .app
-  cd "$app_name-$release_tag"
   wget $testable_app_url
-#  unzip "$testable_app.zip"
-#  mkdir $test_build_dir
-#  # keep a copy of testable .app for repeated re-signing
-#  cp -r "$debug_build_dir/$testable_app" $test_build_dir
 
   # download testable .ipa
   wget "$testable_ipa_url"
@@ -103,20 +104,49 @@ download_project_artifacts(){
 }
 
 # install or re-install from testable .app artifact to build directory
-install_app(){
-  cd $(find_app_dir)
-  rm -rf "$debug_build_dir/$testable_app"
-  unzip "$testable_app.zip"
+install_testable_app(){
+  # clear unpack directory
+  clear_unpacking_dir
 
-  # copy to build dir for testing
-  rm -rf "$test_build_dir/$testable_app"
-  cp -r "$debug_build_dir/$testable_app" $test_build_dir
+  unzip "$test_dir/$published_testable_app" -d $unpack_dir
+
+  # install
+  refresh_testable_app "$unpack_dir/$testable_app" "$(find_app_dir)"
 }
 
 # install or re-install from testable .ipa artifact to build directory
-install_ipa(){
-  cd $(find_app_dir)
-  install_testable_ipa
+install_testable_ipa(){
+  install_testable_ipa_local "$(find_app_dir)"
+}
+
+# unpack testable .app from .ipa and install
+install_testable_ipa_local(){
+  local dst_dir=$1
+
+  # clear unpack directory
+  clear_unpacking_dir
+
+  unzip $published_testable_ipa -d $unpack_dir
+
+  # install
+  refresh_testable_app "$unpack_dir/Payload/$testable_app" $dst_dir
+}
+
+# clear unpacking dir
+clear_unpacking_dir() {
+  rm -rf $unpack_dir
+  mkdir $unpack_dir
+}
+
+# clear build dir and install new testable .app
+refresh_testable_app() {
+  local new_testable_app_dir=$1
+  local dst_app_dir=$2
+  local dst_test_build_dir="$dst_app_dir/$test_build_dir"
+
+  rm -rf $dst_test_build_dir
+  mkdir -p $dst_test_build_dir
+  mv $new_testable_app_dir $dst_test_build_dir
 }
 
 # re-sign testable .app or testable .ipa with local apple developer account
@@ -137,8 +167,8 @@ re-sign(){
     input_file="$debug_build_dir/$testable_app"
     output_file="$resigned_app_dir/$testable_app"
   else
-    input_file="$testable_ipa"
-    output_file="$resigned_app_dir/$testable_ipa"
+    input_file="$archived_testable_ipa"
+    output_file="$resigned_app_dir/$archived_testable_ipa"
   fi
   rm -rf $resigned_app_dir
   mkdir $resigned_app_dir
@@ -229,26 +259,6 @@ run_test_flutter_no_build() {
 find_app_dir(){
   local app_dir="`find $test_dir -type d -maxdepth 1 -mindepth 1`"
   echo $app_dir
-}
-
-# unpack testable .app from .ipa and install
-install_testable_ipa(){
-  local testable_ipa_path='Debug_Runner.ipa'
-  local unpack_dir='/tmp/unpack_testable_ipa'
-
-  # clear unpack directory
-  rm -rf $unpack_dir
-  mkdir $unpack_dir
-
-  unzip $testable_ipa_path -d $unpack_dir
-
-  # move to build area for testing
-  rm -rf "$test_build_dir/$testable_app"
-  # create test build dir in case of 'flutter clean'
-  mkdir -p $test_build_dir
-  # install testable .app
-  mv $unpack_dir/Payload/$testable_app $test_build_dir
-
 }
 
 main "$@"
