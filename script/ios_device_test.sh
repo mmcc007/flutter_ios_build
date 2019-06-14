@@ -1,7 +1,7 @@
 #!/usr/bin/env bash
 
 set -e
-set -x
+#set -x
 
 project_artifacts_base='https://github.com/mmcc007'
 app_name='flutter_ios_build'
@@ -90,17 +90,17 @@ download_project_artifacts(){
   cd $test_dir
 
   # download and setup project src (with test)
-  wget $app_src_url
-  unzip "$release_tag.zip"
+  wget -q --show-progress $app_src_url
+  unzip -q "$release_tag.zip"
 
   # download testable .app
-  wget $testable_app_url
+  wget -q --show-progress $testable_app_url
 
   # download testable .ipa
-  wget "$testable_ipa_url"
+  wget -q --show-progress "$testable_ipa_url"
 
   # download non-testable .ipa
-  wget $non_testable_ipa_url
+  wget -q --show-progress $non_testable_ipa_url
 }
 
 # install or re-install from testable .app artifact to build directory
@@ -108,10 +108,13 @@ install_testable_app(){
   # clear unpack directory
   clear_unpacking_dir
 
-  unzip "$test_dir/$published_testable_app" -d $unpack_dir
+  unzip -q "$test_dir/$published_testable_app" -d $unpack_dir
 
+  local dst_dir="$(find_app_dir)"
   # install
-  refresh_testable_app "$unpack_dir/$testable_app" "$(find_app_dir)"
+  refresh_testable_app "$unpack_dir/$testable_app" $dst_dir
+
+  echo "$test_dir/$published_testable_ipa unpacked to $dst_dir/$test_build_dir"
 }
 
 # install or re-install from testable .ipa artifact to build directory
@@ -127,10 +130,12 @@ install_testable_ipa_local(){
   # clear unpack directory
   clear_unpacking_dir
 
-  unzip "$artifact_dir/$published_testable_ipa" -d $unpack_dir
+  unzip -q "$artifact_dir/$published_testable_ipa" -d $unpack_dir
 
   # install
   refresh_testable_app "$unpack_dir/Payload/$testable_app" $dst_dir
+
+  echo "$artifact_dir/$published_testable_ipa unpacked to $dst_dir/$test_build_dir"
 }
 
 # clear unpacking dir
@@ -253,7 +258,7 @@ run_test_flutter_no_build() {
   # expects to find a testable .app in build directory
   # will install and start it and then run test
   cd $(find_app_dir)
-  flutter --verbose drive --no-build test_driver/main.dart
+  flutter drive --no-build test_driver/main.dart
 }
 
 # find just created test app dir
