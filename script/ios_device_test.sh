@@ -10,9 +10,9 @@ base_dir=$PWD
 debug_build_dir='build/ios/Debug-iphoneos'
 test_build_dir='build/ios/iphoneos'
 testable_app='Runner.app'
-published_testable_app='Debug_Runner.app.zip'
-published_testable_ipa='Debug_Runner.ipa'
-published_non_testable_ipa='Release_Runner.ipa'
+testable_app_artifact='Debug_Runner.app.zip'
+testable_ipa_artifact='Debug_Runner.ipa'
+non_testable_ipa_artifact='Release_Runner.ipa' # not used
 
 # area for unpacking
 unpack_dir='/tmp/unpack_testable_app'
@@ -26,11 +26,11 @@ main(){
           if [[ "$#" -ne 2 ]]; then show_usage; exit 1; fi
           download_project_artifacts $2
           ;;
-      --install_app)
-          install_testable_app
+      --unpack_app)
+          unpack_testable_app
           ;;
-      --install_ipa)
-          install_testable_ipa
+      --unpack_ipa)
+          unpack_testable_ipa
           ;;
       --resign)
           if [[ "$#" -ne 5 ]]; then show_usage; exit 1; fi
@@ -39,9 +39,9 @@ main(){
       --test)
           run_test_flutter_no_build
           ;;
-      --install_local_ipa)
+      --unpack_local_ipa)
           # for dev testing
-          install_testable_ipa_local . .
+          unpack_testable_ipa_local . .
           ;;
       *)
           show_usage
@@ -52,36 +52,35 @@ main(){
 
 show_usage() {
     local script_name=$(basename "$0")
-    printf "\nusage: $script_name [--download <release tag>] [--install_app] [--install_ipa] [--resign <mode> <cert name> <provisioning path>] [--test]
+    printf "\nusage: $script_name [--download <release tag>] [--unpack_app] [--unpack_ipa] [--resign <mode> <cert name> <provisioning path>] [--test]
 where:
     --download
         downloads the src (with test), signed testable .app, signed testable .ipa,
         and signed non-testable .ipa.
         release tag can be found at $project_artifacts_base/$app_name/releases/latest
-    --install_app
-        (re)install testable .app
-    --install_ipa
-        (re)install testable .app from testable .ipa
+    --unpack_app
+        (re)unpack testable .app
+    --unpack_ipa
+        (re)unpack testable .app from testable .ipa
     --resign
-        re-sign and (re)install the testable .app or testable .ipa using local developer account.
+        re-sign and (re)unpack the testable .app or testable .ipa using local developer account.
         mode is 'app' or 'ipa'
     --test
-        runs the integration test using the currently installed testable .app
+        runs the integration test using the currently unpacked testable .app
 
 Sample usage:
 $script_name --resign ipa 'iPhone Distribution: Maurice McCabe (ABCDEFGHIJ)' /Users/jenkins/Library/MobileDevice/Provisioning\ Profiles/408fa202-3212-469d-916c-c7f2ae4d083a.mobileprovision
 "
 }
 
-# download project with signed testable .app and non-testable .ipa
+# download project with signed testable .app/.ipa and non-testable .ipa
 download_project_artifacts(){
   local release_tag=$1
 
-  local non_testable_ipa='Runner.ipa'
   local app_src_url="$project_artifacts_base/$app_name/archive/$release_tag.zip"
-  local testable_app_url="$project_artifacts_base/$app_name/releases/download/$release_tag/$published_testable_app"
-  local testable_ipa_url="$project_artifacts_base/$app_name/releases/download/$release_tag/$published_testable_ipa"
-  local non_testable_ipa_url="$project_artifacts_base/$app_name/releases/download/$release_tag/$published_non_testable_ipa"
+  local testable_app_url="$project_artifacts_base/$app_name/releases/download/$release_tag/$testable_app_artifact"
+  local testable_ipa_url="$project_artifacts_base/$app_name/releases/download/$release_tag/$testable_ipa_artifact"
+  local non_testable_ipa_url="$project_artifacts_base/$app_name/releases/download/$release_tag/$non_testable_ipa_artifact"
 
   # clear test area
   rm -rf $test_dir
@@ -91,6 +90,7 @@ download_project_artifacts(){
 
   # download and setup project src (with test)
   wget -q --show-progress $app_src_url
+  echo "unpacking project src to $test_dir/$app_name-$release_tag"
   unzip -q "$release_tag.zip"
 
   # download testable .app
@@ -103,43 +103,43 @@ download_project_artifacts(){
   wget -q --show-progress $non_testable_ipa_url
 }
 
-# install or re-install from testable .app artifact to build directory
-install_testable_app(){
+# unpack or re-unpack from testable .app artifact to build directory
+unpack_testable_app(){
   # clear unpack directory
-  clear_unpacking_dir
+  clear_unpack_dir
 
-  unzip -q "$test_dir/$published_testable_app" -d $unpack_dir
+  unzip -q "$test_dir/$testable_app_artifact" -d $unpack_dir
 
-  local dst_dir="$(find_app_dir)"
+  local app_dir="$(find_app_dir)"
   # install
-  refresh_testable_app "$unpack_dir/$testable_app" $dst_dir
+  refresh_testable_app "$unpack_dir/$testable_app" $app_dir
 
-  echo "$test_dir/$published_testable_ipa unpacked to $dst_dir/$test_build_dir"
+  echo "$test_dir/$testable_app_artifact unpacked to $app_dir/$test_build_dir"
 }
 
-# install or re-install from testable .ipa artifact to build directory
-install_testable_ipa(){
-  install_testable_ipa_local "$(find_app_dir)" $test_dir
+# unpack or re-unpack from testable .ipa artifact to build directory
+unpack_testable_ipa(){
+  unpack_testable_ipa_local "$(find_app_dir)" $test_dir
 }
 
-# unpack testable .app from .ipa and install
-install_testable_ipa_local(){
-  local dst_dir=$1
+# unpack testable .app from .ipa to build directory
+unpack_testable_ipa_local(){
+  local app_dir=$1
   local artifact_dir=$2
 
   # clear unpack directory
-  clear_unpacking_dir
+  clear_unpack_dir
 
-  unzip -q "$artifact_dir/$published_testable_ipa" -d $unpack_dir
+  unzip -q "$artifact_dir/$testable_ipa_artifact" -d $unpack_dir
 
   # install
-  refresh_testable_app "$unpack_dir/Payload/$testable_app" $dst_dir
+  refresh_testable_app "$unpack_dir/Payload/$testable_app" $app_dir
 
-  echo "$artifact_dir/$published_testable_ipa unpacked to $dst_dir/$test_build_dir"
+  echo "$artifact_dir/$testable_ipa_artifact unpacked to $app_dir/$test_build_dir"
 }
 
 # clear unpacking dir
-clear_unpacking_dir() {
+clear_unpack_dir() {
   rm -rf $unpack_dir
   mkdir $unpack_dir
 }
@@ -195,7 +195,8 @@ run_test_custom() {
     local IOS_BUNDLE='build/ios/iphoneos/Runner.app'
     local device_udid='3b3455019e329e007e67239d9b897148244b5053'
 
-    cd $(find_app_dir)
+    local app_dir=$(find_app_dir)
+    cd $app_dir
 
     # kill any running iproxy processes (that are holding local ports open)
     echo "killing any iproxy processes"
@@ -243,6 +244,7 @@ run_test_custom() {
     # run test
     flutter packages get
     export VM_SERVICE_URL=http://127.0.0.1:$host_port
+    echo "running dart test_driver/main.dart in $app_dir"
     dart test_driver/main_test.dart
 
 }
@@ -250,14 +252,18 @@ run_test_custom() {
 run_test_flutter() {
   # builds a new testable .app using local cert and prov
   # will install and start it and then run test
-  cd $(find_app_dir)
+  local app_dir=$(find_app_dir)
+  cd $app_dir
+  echo "running flutter drive test_driver/main.dart in $app_dir"
   flutter --verbose drive test_driver/main.dart
 }
 
 run_test_flutter_no_build() {
   # expects to find a testable .app in build directory
   # will install and start it and then run test
-  cd $(find_app_dir)
+  local app_dir=$(find_app_dir)
+  cd $app_dir
+  echo "running flutter drive --no-build test_driver/main.dart in $app_dir"
   flutter drive --no-build test_driver/main.dart
 }
 
