@@ -5,17 +5,20 @@ set -e
 
 project_artifacts_base='https://github.com/mmcc007'
 app_name='flutter_ios_build'
-test_dir='tmp'
+test_dir='/tmp/flutter_test'
 base_dir=$PWD
-debug_build_dir='build/ios/Debug-iphoneos'
 test_build_dir='build/ios/iphoneos'
 testable_app='Runner.app'
 testable_app_artifact='Debug_Runner.app.zip'
 testable_ipa_artifact='Debug_Runner.ipa'
-non_testable_ipa_artifact='Release_Runner.ipa' # not used
+non_testable_ipa_artifact='Release_Runner.ipa' # not used in testing
 
 # area for unpacking
-unpack_dir='/tmp/unpack_testable_app'
+unpack_dir="$test_dir/unpack_testable_app"
+
+# area for re-signing (experimental)
+resigned_app_dir="$test_dir/resign_testable_app_or_ipa"
+
 
 main(){
   # if no arguments passed
@@ -89,6 +92,7 @@ download_project_artifacts(){
   cd $test_dir
 
   # download and setup project src (with test)
+  # todo: unpack test src only
   wget -q --show-progress $app_src_url
   echo "unpacking project src to $test_dir/$app_name-$release_tag"
   unzip -q "$release_tag.zip"
@@ -97,7 +101,7 @@ download_project_artifacts(){
   wget -q --show-progress $testable_app_url
 
   # download testable .ipa
-  wget -q --show-progress "$testable_ipa_url"
+  wget -q --show-progress $testable_ipa_url
 
   # download non-testable .ipa
   wget -q --show-progress $non_testable_ipa_url
@@ -156,11 +160,11 @@ refresh_testable_app() {
 }
 
 # re-sign testable .app or testable .ipa with local apple developer account
+# experimental
 re-sign(){
   local resign_mode=$1
   local cert_name=$2
   local provisioning_profile_path=$3
-  local resigned_app_dir='/tmp/resigned'
 
   cd $(find_app_dir)
 
@@ -170,7 +174,7 @@ re-sign(){
   local input_file=''
   local output_file=''
   if [[ "$resign_mode" == 'app' ]]; then
-    input_file="$debug_build_dir/$testable_app"
+#    input_file="$debug_build_dir/$testable_app" # todo: fix
     output_file="$resigned_app_dir/$testable_app"
   else
     input_file="$archived_testable_ipa"
@@ -189,6 +193,7 @@ re-sign(){
 # run test without flutter tools
 # assumes testable .app already built
 # similar to --no-build
+# experimental
 run_test_custom() {
     local package_name='com.orbsoft.counter'
 #    local IOS_BUNDLE=$PWD/build/ios/Debug-iphoneos/Runner.app
