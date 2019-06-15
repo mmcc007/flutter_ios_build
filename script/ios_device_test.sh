@@ -13,6 +13,12 @@ testable_app_artifact='Debug_Runner.app.zip'
 testable_ipa_artifact='Debug_Runner.ipa'
 non_testable_ipa_artifact='Release_Runner.ipa' # not used in testing
 
+# test app dir
+test_app_dir="$test_dir/test_app"
+
+# artifact dir
+artifact_dir="$test_dir/artifacts"
+
 # area for unpacking
 unpack_dir="$test_dir/unpack_testable_app"
 
@@ -87,24 +93,28 @@ download_project_artifacts(){
 
   # clear test area
   rm -rf $test_dir
-  mkdir $test_dir
+  mkdir -p $test_dir
 
-  cd $test_dir
+  mkdir $artifact_dir
 
-  # download and setup project src (with test)
-  # todo: unpack test src only
-  wget -q --show-progress $app_src_url
-  echo "unpacking project src to $test_dir/$app_name-$release_tag"
-  unzip -q "$release_tag.zip"
+  # download testable src
+  wget -q --show-progress -P $artifact_dir $app_src_url
 
   # download testable .app
-  wget -q --show-progress $testable_app_url
+  wget -q --show-progress -P $artifact_dir $testable_app_url
 
   # download testable .ipa
-  wget -q --show-progress $testable_ipa_url
+  wget -q --show-progress  -P $artifact_dir $testable_ipa_url
 
   # download non-testable .ipa
-  wget -q --show-progress $non_testable_ipa_url
+  wget -q --show-progress  -P $artifact_dir $non_testable_ipa_url
+
+  # setup project src (with test)
+  # todo: unpack test src only
+  mkdir $test_app_dir
+  echo "unpacking project src to $test_app_dir/$app_name-$release_tag"
+  unzip -q "$artifact_dir/$release_tag.zip" -d $test_app_dir
+
 }
 
 # unpack or re-unpack from testable .app artifact to build directory
@@ -112,18 +122,18 @@ unpack_testable_app(){
   # clear unpack directory
   clear_unpack_dir
 
-  unzip -q "$test_dir/$testable_app_artifact" -d $unpack_dir
+  unzip -q "$artifact_dir/$testable_app_artifact" -d $unpack_dir
 
   local app_dir="$(find_app_dir)"
   # install
   refresh_testable_app "$unpack_dir/$testable_app" $app_dir
 
-  echo "$test_dir/$testable_app_artifact unpacked to $app_dir/$test_build_dir"
+  echo "$artifact_dir/$testable_app_artifact unpacked to $app_dir/$test_build_dir"
 }
 
 # unpack or re-unpack from testable .ipa artifact to build directory
 unpack_testable_ipa(){
-  unpack_testable_ipa_local "$(find_app_dir)" $test_dir
+  unpack_testable_ipa_local "$(find_app_dir)" $artifact_dir
 }
 
 # unpack testable .app from .ipa to build directory
@@ -274,7 +284,7 @@ run_test_flutter_no_build() {
 
 # find just created test app dir
 find_app_dir(){
-  local app_dir="`find $test_dir -type d -maxdepth 1 -mindepth 1`"
+  local app_dir="`find $test_app_dir -type d -maxdepth 1 -mindepth 1`"
   echo $app_dir
 }
 
