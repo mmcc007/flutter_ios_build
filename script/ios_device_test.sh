@@ -50,7 +50,7 @@ main(){
           ;;
       --unpack_local_ipa)
           # for dev testing
-          unpack_testable_ipa_local . .
+          unpack_testable_ipa_local . $testable_ipa_artifact
           ;;
       *)
           show_usage
@@ -133,23 +133,23 @@ unpack_testable_app(){
 
 # unpack or re-unpack from testable .ipa artifact to build directory
 unpack_testable_ipa(){
-  unpack_testable_ipa_local "$(find_app_dir)" $artifact_dir
+  unpack_testable_ipa_local "$(find_app_dir)" "$artifact_dir/$testable_ipa_artifact"
 }
 
 # unpack testable .app from .ipa to build directory
 unpack_testable_ipa_local(){
   local app_dir=$1
-  local artifact_dir=$2
+  local artifact_path=$2
 
   # clear unpack directory
   clear_unpack_dir
 
-  unzip -q "$artifact_dir/$testable_ipa_artifact" -d $unpack_dir
+  unzip -q $artifact_path -d $unpack_dir
 
   # install
   refresh_testable_app "$unpack_dir/Payload/$testable_app" $app_dir
 
-  echo "$artifact_dir/$testable_ipa_artifact unpacked to $app_dir/$test_build_dir"
+  echo "$artifact_path unpacked to $app_dir/$test_build_dir"
 }
 
 # clear unpacking dir
@@ -176,28 +176,31 @@ re-sign(){
   local cert_name=$2
   local provisioning_profile_path=$3
 
-  cd $(find_app_dir)
-
-  # todo: re-sign from original artifacts
-
   # resign testable .app or testable .ipa
   local input_file=''
   local output_file=''
   if [[ "$resign_mode" == 'app' ]]; then
-#    input_file="$debug_build_dir/$testable_app" # todo: fix
+    # unzip the testable .app artifact
+    clear_unpack_dir
+    unzip -q "$artifact_dir/$testable_app_artifact" -d $unpack_dir
+
+    input_file="$unpack_dir/$testable_app"
     output_file="$resigned_app_dir/$testable_app"
   else
-    input_file="$archived_testable_ipa"
-    output_file="$resigned_app_dir/$archived_testable_ipa"
+    input_file="$artifact_dir/$testable_ipa_artifact"
+    output_file="$resigned_app_dir/$testable_ipa_artifact"
   fi
+
+  # clear re-signed directory
   rm -rf $resigned_app_dir
   mkdir $resigned_app_dir
+
+  # re-sign
   ./script/resign.sh "$input_file" "$cert_name" --provisioning "$provisioning_profile_path" --verbose "$output_file"
 
-  # over-write original testable .app with re-signed testable .app
-  rm -rf "$test_build_dir/$testable_app"
-  unzip $output_file -d $resigned_app_dir
-  mv $resigned_app_dir/Payload/$testable_app $test_build_dir
+  # unpack re-signed artifact and refresh test dir with re-signed testable .app
+   unpack_testable_ipa_local "$(find_app_dir)" $output_file
+
 }
 
 # run test without flutter tools
@@ -282,7 +285,7 @@ run_test_flutter_no_build() {
   flutter drive --no-build test_driver/main.dart
 }
 
-# find just created test app dir
+# find just-created test app dir
 find_app_dir(){
   local app_dir="`find $test_app_dir -type d -maxdepth 1 -mindepth 1`"
   echo $app_dir
