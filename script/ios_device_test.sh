@@ -302,7 +302,28 @@ find_app_dir(){
 }
 
 detect_testable_ipa(){
-  echo
+  # clear unpack directory
+  clear_unpack_dir
+
+  unzip -q "$artifact_dir/$testable_ipa_artifact" -d $unpack_dir
+#  unzip -q "$artifact_dir/$non_testable_ipa_artifact" -d $unpack_dir
+
+  local flutter_engine
+  flutter_engine=$(find "$unpack_dir" -name Flutter)
+  # check not empty
+  if [[ ! -z "$flutter_engine" ]]; then
+    # check if release or debug flutter engine
+    local observatory_symbol
+    observatory_symbol=$(nm "$flutter_engine" | grep 'observatory' || echo '')
+    if [[ ! -z "$observatory_symbol" ]]; then
+      echo "Flutter testable .ipa found"
+    else
+      echo "Flutter release .ipa found"
+    fi
+  else
+    echo "Not a Flutter .ipa"
+  fi
+
 }
 
 main "$@"
